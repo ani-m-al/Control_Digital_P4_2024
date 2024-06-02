@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <Arduino.h>
 
 extern "C" {
@@ -6,25 +7,28 @@ extern "C" {
   #include <pulsantes.h>
 }
 
-int interval = 500;
-unsigned long prevTime;
-bool flag = false;
-int currSeq = 0;
 
-//bool_t flagsControl[] = {FALSE, FALSE, FALSE, FALSE, FALSE};
-typedef int gpioMap_t;
-const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED, LED_BLUE};
-const uint8_t ultimoLed = sizeof(secuencia) / sizeof(secuencia[0]);
+Nodo* cabeza = NULL;
+Nodo* actual = NULL;
+bool direccion = true; // true para adelante, false para atrás
+unsigned long prevMillis = 0;
+unsigned long interval = 200;
 
-typedef struct {
-  gpioMap_t * ptrLed;
-  const gpioMap_t * ptrPrimerLed;
-  const uint8_t * ptrUltimoLed;
-} controlSecuencia_t;
+// Variables para el anti-rebote del pulsante
+unsigned long debounceDelay = 50;
 
-void activarSecuencia(int16_t *psecuencia){
-/* psecuencia apunta a una secuencia de leds o arreglo */
-}
+bool lastButtonStateSW1 = true;
+bool buttonStateSW1 = true;
+unsigned long lastDebounceTimeSW1 = 0;
+bool lastButtonStateSW2 = true;
+bool buttonStateSW2 = true;
+unsigned long lastDebounceTimeSW2 = 0;
+bool lastButtonStateSW3 = true;
+bool buttonStateSW3 = true;
+unsigned long lastDebounceTimeSW3 = 0;
+bool lastButtonStateSW4 = true;
+bool buttonStateSW4 = true;
+unsigned long lastDebounceTimeSW4 = 0;
 
 void setup() {
     Serial.begin(115200);
@@ -39,41 +43,99 @@ void setup() {
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
 
-    prevTime = millis();
+    insertarAlFinal(&cabeza, LED_GREEN);
+    insertarAlFinal(&cabeza, LED_YELLOW);
+    insertarAlFinal(&cabeza, LED_RED);
+    insertarAlFinal(&cabeza, LED_BLUE);
+    actual = cabeza;
+    prevMillis = millis();
 }
 
 void loop() {
-    unsigned long currTime = millis();
+    unsigned long currentMillis = millis();
+    // Leer el estado de SW1 usando leerTecla (opcional, para pruebas)
+    bool sw1State = leerTecla(SW1);
+    bool sw2State = leerTecla(SW2);
+    bool sw3State = leerTecla(SW3);
+    bool sw4State = leerTecla(SW4);
+    //Serial.println(sw1State);
 
-    if ((currTime - prevTime) >= interval) {
-        // if (flag) {
-        //     encenderLED(secuencia[currSeq]);
-        //     currSeq++;
-        //     if (currSeq >= ultimoLed) {
-        //         currSeq = 0;
-        //     }
-
-        // }
-        
-        ///////Cambio de recorrido//////
-
-        if (flag) {
-            encenderLED(secuencia[currSeq]);
-            currSeq--;
-            if (currSeq < 0) {
-                currSeq = ultimoLed - 1;
+    if ((currentMillis - prevMillis) >= interval) {
+        apagarLED();
+        if (direccion) {
+            if (actual->siguiente != NULL) {
+                actual = actual->siguiente;
+            } else {
+                actual = cabeza;
+            }
+        } else {
+            if (actual->anterior != NULL) {
+                actual = actual->anterior;
+            } else {
+                while (actual->siguiente != NULL) {
+                    actual = actual->siguiente;
+                }
             }
         }
-
-        ///////////////////////////////
-        
-         else {
-            apagarLED();
-        }
-        flag = !flag;
-        prevTime = currTime;
+        encenderLED(actual->led);
+        prevMillis = currentMillis;
     }
 
-    bool swval = leerTecla(SW1);
-    Serial.println(swval);
+    // Anti-rebote del pulsante SW1
+    if (sw1State != lastButtonStateSW1) {
+        lastDebounceTimeSW1 = millis();
+    }
+
+    if ((millis() - lastDebounceTimeSW1) > debounceDelay) {
+        if (sw1State != buttonStateSW1) {
+            buttonStateSW1 = sw1State;
+            if (buttonStateSW1 == LOW) {
+                direccion = true; // Cambia la dirección
+            }
+        }
+    }
+    lastButtonStateSW1 = sw1State;
+
+    if (sw2State != lastButtonStateSW2) {
+        lastDebounceTimeSW2 = millis();
+    }
+
+    if ((millis() - lastDebounceTimeSW2) > debounceDelay) {
+        if (sw2State != buttonStateSW2) {
+            buttonStateSW2 = sw2State;
+            if (buttonStateSW2 == LOW) {
+                direccion = false; // Cambia la dirección
+            }
+        }
+    }
+    lastButtonStateSW2 = sw2State;
+
+    if (sw3State != lastButtonStateSW3) {
+        lastDebounceTimeSW3 = millis();
+    }
+
+    if ((millis() - lastDebounceTimeSW3) > debounceDelay) {
+        if (sw3State != buttonStateSW3) {
+            buttonStateSW3 = sw3State;
+            if (buttonStateSW3 == LOW) {
+                interval = 200; // Cambia el tiempo
+            }
+        }
+    }
+    lastButtonStateSW3 = sw3State;
+
+    if (sw4State != lastButtonStateSW4) {
+        lastDebounceTimeSW4 = millis();
+    }
+
+    if ((millis() - lastDebounceTimeSW4) > debounceDelay) {
+        if (sw4State != buttonStateSW4) {
+            buttonStateSW4 = sw1State;
+            if (buttonStateSW4 == LOW) {
+                interval = 750; // Cambia el tiempo
+            }
+        }
+    }
+    lastButtonStateSW4 = sw4State;
+    
 }

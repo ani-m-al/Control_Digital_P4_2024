@@ -3,7 +3,7 @@
 #define LED_YELLOW 10
 #define LED_GREEN 11
 
-#define SW1 2
-#define SW2 3
-#define SW3 4
-#define SW4 5
+#define SW1 7
+#define SW2 6
+#define SW3 5
+#define SW4 4
