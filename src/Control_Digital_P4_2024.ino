@@ -7,7 +7,6 @@ extern "C" {
   #include <pulsantes.h>
 }
 
-
 Nodo* cabeza = NULL;
 Nodo* actual = NULL;
 bool direccion = true; // true para adelante, false para atrás
@@ -32,16 +31,6 @@ unsigned long lastDebounceTimeSW4 = 0;
 
 void setup() {
     Serial.begin(115200);
-
-    pinMode(SW1, INPUT_PULLUP);
-    pinMode(SW2, INPUT_PULLUP);
-    pinMode(SW3, INPUT_PULLUP);
-    pinMode(SW4, INPUT_PULLUP);
-
-    pinMode(LED_GREEN, OUTPUT);
-    pinMode(LED_YELLOW, OUTPUT);
-    pinMode(LED_RED, OUTPUT);
-    pinMode(LED_BLUE, OUTPUT);
 
     insertarAlFinal(&cabeza, LED_GREEN);
     insertarAlFinal(&cabeza, LED_YELLOW);
