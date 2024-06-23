@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <Arduino.h>
-#include <hard.h>
+#include <hal.h>
 
 bool encenderLED(int16_t LED);
 bool apagarLED();
@@ -15,3 +15,4 @@ typedef struct Nodo {
 Nodo* crearNodo(int led);
 
 void insertarAlFinal(Nodo** cabeza, int led);
+void inicializarLista();
